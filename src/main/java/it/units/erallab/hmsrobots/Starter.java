@@ -48,12 +48,8 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -122,7 +118,8 @@ public class Starter {
   }
 
   public static void main(String[] args) {
-    bipedWithBrain();
+    RNNbiped();
+    //bipedWithBrain();
     //bipeds();
     //rollingOne();
     //rollingBall();
@@ -133,6 +130,31 @@ public class Starter {
     //bipedAndBall();
     //bipedCentralized();
     //devoComb();
+  }
+
+  private static void RNNbiped() {
+    Grid<? extends SensingVoxel> body = RobotUtils.buildSensorizingFunction("spinedTouch-t-f-0").apply(RobotUtils.buildShape("biped-7x4"));
+    //centralized sensing
+    CentralizedSensing centralizedSensing = new CentralizedSensing(body);
+
+    int nOfInputs = centralizedSensing.nOfInputs();
+    int nOfRecurrentNeurons = 20;
+    int nOfOutputs = centralizedSensing.nOfOutputs();
+    RecurrentNeuralNetwork rnn = new RecurrentNeuralNetwork(nOfInputs, nOfRecurrentNeurons, nOfOutputs);
+    double[] params = rnn.getParams();
+    rnn.setParams(Arrays.stream(params).map(d -> Math.random() * 2 - 1).toArray());
+    centralizedSensing.setFunction(rnn);
+    Robot<SensingVoxel> centralized = new Robot<>(
+        centralizedSensing,
+        SerializationUtils.clone(body)
+    );
+    //episode
+    Locomotion locomotion = new Locomotion(
+        30,
+        Locomotion.createTerrain("downhill-30"),
+        new Settings()
+    );
+    GridOnlineViewer.run(locomotion, Grid.create(1, 1, Pair.of("", centralized)), Drawers::basicWithMiniWorld);
   }
 
   private static void bipedWithBrain() {
@@ -147,7 +169,7 @@ public class Starter {
     int nOfWeights = MultiLayerPerceptron.countWeights(nOfInputs, innerNeurons, nOfOutputs);
     double[] weights = IntStream.range(0, nOfWeights).mapToDouble(i -> 2 * Math.random() - 1).toArray();
     MultiLayerPerceptron mlp = new MultiLayerPerceptron(MultiLayerPerceptron.ActivationFunction.TANH,
-        nOfInputs,innerNeurons,nOfOutputs,weights);
+        nOfInputs, innerNeurons, nOfOutputs, weights);
     centralizedSensing.setFunction(mlp);
     Robot<SensingVoxel> centralized = new Robot<>(
         centralizedSensing,

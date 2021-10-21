@@ -173,18 +173,19 @@ public class RecurrentNeuralNetwork implements Serializable, RealFunction, Param
   }
 
   private static double[][][] unflat(double[] flatWeights, int inputNeurons, int recurrentNeurons, int outputNeurons) {
+    int[] sizes = {inputNeurons * recurrentNeurons, (recurrentNeurons - 1) * recurrentNeurons, outputNeurons * recurrentNeurons};
     double[][][] unflatWeights = new double[3][][];
     unflatWeights[0] = unflatWeights(
-        Arrays.copyOfRange(flatWeights, 0, inputNeurons * recurrentNeurons),
+        Arrays.copyOfRange(flatWeights, 0, sizes[0]),
         inputNeurons,
         recurrentNeurons
     );
     unflatWeights[1] = unflatRecurrentWeights(
-        Arrays.copyOfRange(flatWeights, inputNeurons * recurrentNeurons, (recurrentNeurons - 1) * recurrentNeurons),
+        Arrays.copyOfRange(flatWeights, sizes[0], sizes[0] + sizes[1]),
         recurrentNeurons
     );
     unflatWeights[2] = unflatWeights(
-        Arrays.copyOfRange(flatWeights, (recurrentNeurons - 1) * recurrentNeurons, outputNeurons * recurrentNeurons),
+        Arrays.copyOfRange(flatWeights, sizes[0] + sizes[1], sizes[0] + sizes[1] + sizes[2]),
         recurrentNeurons,
         outputNeurons
     );
