@@ -30,6 +30,7 @@ import it.units.erallab.hmsrobots.core.snapshots.MLPState;
 import it.units.erallab.hmsrobots.tasks.devolocomotion.DevoLocomotion;
 import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.tasks.locomotion.Outcome;
+import it.units.erallab.hmsrobots.tasks.periodiclocomotion.PeriodicLocomotion;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
@@ -118,7 +119,7 @@ public class Starter {
   }
 
   public static void main(String[] args) {
-    RNNbiped();
+    RnnBipedPeriodic();
     //bipedWithBrain();
     //bipeds();
     //rollingOne();
@@ -132,7 +133,7 @@ public class Starter {
     //devoComb();
   }
 
-  private static void RNNbiped() {
+  private static void RnnBipedPeriodic() {
     Grid<? extends SensingVoxel> body = RobotUtils.buildSensorizingFunction("spinedTouch-t-f-0").apply(RobotUtils.buildShape("biped-7x4"));
     //centralized sensing
     CentralizedSensing centralizedSensing = new CentralizedSensing(body);
@@ -149,9 +150,9 @@ public class Starter {
         SerializationUtils.clone(body)
     );
     //episode
-    Locomotion locomotion = new Locomotion(
+    PeriodicLocomotion locomotion = new PeriodicLocomotion(
         30,
-        Locomotion.createTerrain("downhill-30"),
+        100,
         new Settings()
     );
     GridOnlineViewer.run(locomotion, Grid.create(1, 1, Pair.of("", centralized)), Drawers::basicWithMiniWorld);
