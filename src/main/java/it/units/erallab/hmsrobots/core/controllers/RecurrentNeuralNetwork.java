@@ -19,6 +19,9 @@ package it.units.erallab.hmsrobots.core.controllers;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.controllers.MultiLayerPerceptron.ActivationFunction;
+import it.units.erallab.hmsrobots.core.snapshots.RNNState;
+import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
+import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 import it.units.erallab.hmsrobots.util.Parametrized;
 
 import java.io.Serializable;
@@ -30,7 +33,7 @@ import java.util.stream.IntStream;
 /**
  * @author eric
  */
-public class RecurrentNeuralNetwork implements Serializable, RealFunction, Parametrized, Resettable {
+public class RecurrentNeuralNetwork implements Serializable, RealFunction, Parametrized, Resettable, Snapshottable {
 
   private static final double P = 0.01;
 
@@ -38,7 +41,9 @@ public class RecurrentNeuralNetwork implements Serializable, RealFunction, Param
   private final int recurrentNeurons;
   private final int outputNeurons;
 
+  private final double[] inputNeuronsValues;
   private final double[] recurrentNeuronsValues;
+  private final double[] outputNeuronsValues;
 
   @JsonProperty
   private final ActivationFunction activationFunction;
@@ -84,7 +89,9 @@ public class RecurrentNeuralNetwork implements Serializable, RealFunction, Param
     this.inputWeights = inputWeights;
     this.recurrentWeights = recurrentWeights;
     this.outputWeights = outputWeights;
+    inputNeuronsValues = new double[inputNeurons];
     recurrentNeuronsValues = new double[recurrentNeurons];
+    outputNeuronsValues = new double[outputNeurons];
     this.reset();
   }
 
@@ -104,7 +111,9 @@ public class RecurrentNeuralNetwork implements Serializable, RealFunction, Param
     this.inputWeights = weights[0];
     this.recurrentWeights = weights[1];
     this.outputWeights = weights[2];
+    inputNeuronsValues = new double[inputNeurons];
     recurrentNeuronsValues = new double[recurrentNeurons];
+    outputNeuronsValues = new double[outputNeurons];
     this.reset();
   }
 
@@ -113,15 +122,15 @@ public class RecurrentNeuralNetwork implements Serializable, RealFunction, Param
   }
 
   @Override
-  public double[] apply(double[] input) {
-    if (input.length != inputNeurons) {
-      throw new IllegalArgumentException(String.format("Expected input length is %d: found %d", inputNeurons, input.length));
+  public double[] apply(double[] inputs) {
+    if (inputs.length != inputNeurons) {
+      throw new IllegalArgumentException(String.format("Expected input length is %d: found %d", inputNeurons, inputs.length));
     }
-    input = Arrays.stream(input).map(activationFunction::apply).toArray();
+    IntStream.range(0, inputNeurons).forEach(i -> inputNeuronsValues[i] = activationFunction.apply(inputs[i]));
     double[] recurrentSynapticInputs = new double[recurrentNeurons];
     for (int i = 0; i < recurrentNeurons; i++) {
       for (int k = 0; k < inputNeurons; k++) {
-        recurrentSynapticInputs[i] += inputWeights[k][i] * input[k];
+        recurrentSynapticInputs[i] += inputWeights[k][i] * inputNeuronsValues[k];
       }
       for (int j = 0; j < recurrentNeurons; j++) {
         if (j == i) {
@@ -139,7 +148,8 @@ public class RecurrentNeuralNetwork implements Serializable, RealFunction, Param
         outputs[j] += outputWeights[i][j] * recurrentNeuronsValues[i];
       }
     }
-    return Arrays.stream(outputs).map(activationFunction::apply).toArray();
+    IntStream.range(0, outputNeurons).forEach(i -> outputNeuronsValues[i] = activationFunction.apply(outputs[i]));
+    return outputNeuronsValues;
   }
 
   @Override
@@ -257,8 +267,18 @@ public class RecurrentNeuralNetwork implements Serializable, RealFunction, Param
   }
 
   @Override
+  public Snapshot getSnapshot() {
+    return new Snapshot(
+        new RNNState(inputNeuronsValues, recurrentNeuronsValues, outputNeuronsValues, inputWeights, recurrentWeights, outputWeights, activationFunction.getDomain()),
+        getClass()
+    );
+  }
+
+  @Override
   public void reset() {
+    IntStream.range(0, inputNeurons).forEach(i -> inputNeuronsValues[i] = 0);
     IntStream.range(0, recurrentNeurons).forEach(i -> recurrentNeuronsValues[i] = 0);
+    IntStream.range(0, outputNeurons).forEach(i -> outputNeuronsValues[i] = 0);
   }
 
   @Override

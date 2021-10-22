@@ -155,7 +155,7 @@ public class Starter {
         100,
         new Settings()
     );
-    GridOnlineViewer.run(locomotion, Grid.create(1, 1, Pair.of("", centralized)), Drawers::basicWithMiniWorld);
+    GridOnlineViewer.run(locomotion, Grid.create(1, 1, Pair.of("", centralized)), Drawers::basicWithMiniWorldAndBrain);
   }
 
   private static void bipedWithBrain() {

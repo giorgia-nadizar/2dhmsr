@@ -19,6 +19,7 @@ package it.units.erallab.hmsrobots.viewers.drawers;
 
 import it.units.erallab.hmsrobots.core.geometry.BoundingBox;
 import it.units.erallab.hmsrobots.core.snapshots.MLPState;
+import it.units.erallab.hmsrobots.core.snapshots.RNNState;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 import it.units.erallab.hmsrobots.viewers.DrawingUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -155,12 +156,22 @@ public class MLPDrawer extends MemoryDrawer<MLPState> {
         );
       }
       if (parts.contains(Part.STRUCTURE_AXIS)) {
-        drawStructure(
-            Arrays.stream(current.getActivationValues()).mapToInt(v -> v.length).toArray(),
-            i -> "l" + i,
-            BoundingBox.of(boundingBoxes[plotParts.indexOf(Part.ACTIVATION_VALUES)].max.x, boundingBoxes[plotParts.indexOf(Part.ACTIVATION_VALUES)].min.y, oBB.max.x, boundingBoxes[plotParts.indexOf(Part.ACTIVATION_VALUES)].max.y),
-            textW, g
-        );
+        if (current instanceof RNNState) {
+          String[] names = {"in", "rec", "out"};
+          drawStructure(
+              Arrays.stream(current.getActivationValues()).mapToInt(v -> v.length).toArray(),
+              i -> names[i],
+              BoundingBox.of(boundingBoxes[plotParts.indexOf(Part.ACTIVATION_VALUES)].max.x, boundingBoxes[plotParts.indexOf(Part.ACTIVATION_VALUES)].min.y, oBB.max.x, boundingBoxes[plotParts.indexOf(Part.ACTIVATION_VALUES)].max.y),
+              textW, g
+          );
+        } else {
+          drawStructure(
+              Arrays.stream(current.getActivationValues()).mapToInt(v -> v.length).toArray(),
+              i -> "l" + i,
+              BoundingBox.of(boundingBoxes[plotParts.indexOf(Part.ACTIVATION_VALUES)].max.x, boundingBoxes[plotParts.indexOf(Part.ACTIVATION_VALUES)].min.y, oBB.max.x, boundingBoxes[plotParts.indexOf(Part.ACTIVATION_VALUES)].max.y),
+              textW, g
+          );
+        }
       }
       if (parts.contains(Part.HISTOGRAM)) {
         drawHistogram(memory, MLPState::getActivationValues, min, max,
@@ -194,12 +205,22 @@ public class MLPDrawer extends MemoryDrawer<MLPState> {
         );
       }
       if (parts.contains(Part.STRUCTURE_AXIS)) {
-        drawStructure(
-            Arrays.stream(flat(current.getWeights())).mapToInt(v -> v.length).toArray(),
-            i -> "w" + i + (i + 1),
-            BoundingBox.of(boundingBoxes[plotParts.indexOf(Part.WEIGHTS)].max.x, boundingBoxes[plotParts.indexOf(Part.WEIGHTS)].min.y, oBB.max.x, boundingBoxes[plotParts.indexOf(Part.WEIGHTS)].max.y),
-            textW, g
-        );
+        if (current instanceof RNNState) {
+          String[] names = {"w(i,r)", "w(r,r)", "w(r,o)"};
+          drawStructure(
+              Arrays.stream(flat(current.getWeights())).mapToInt(v -> v.length).toArray(),
+              i -> names[i],
+              BoundingBox.of(boundingBoxes[plotParts.indexOf(Part.WEIGHTS)].max.x, boundingBoxes[plotParts.indexOf(Part.WEIGHTS)].min.y, oBB.max.x, boundingBoxes[plotParts.indexOf(Part.WEIGHTS)].max.y),
+              textW, g
+          );
+        } else {
+          drawStructure(
+              Arrays.stream(flat(current.getWeights())).mapToInt(v -> v.length).toArray(),
+              i -> "w" + i + (i + 1),
+              BoundingBox.of(boundingBoxes[plotParts.indexOf(Part.WEIGHTS)].max.x, boundingBoxes[plotParts.indexOf(Part.WEIGHTS)].min.y, oBB.max.x, boundingBoxes[plotParts.indexOf(Part.WEIGHTS)].max.y),
+              textW, g
+          );
+        }
       }
       if (parts.contains(Part.HISTOGRAM)) {
         drawHistogram(memory, s -> flat(s.getWeights()), min, max,
