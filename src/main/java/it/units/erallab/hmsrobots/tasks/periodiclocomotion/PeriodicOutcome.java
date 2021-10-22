@@ -15,6 +15,7 @@ public class PeriodicOutcome extends Outcome {
     this.length = length;
   }
 
+  // TODO reason on goals positioning: maybe the "border" of the terrain should be the target
   public double getCoverage() {
     boolean forward = true;
     double[] robotPositions = getObservations().values().stream().mapToDouble(PeriodicOutcome::getRobotCenterPosition).toArray();
@@ -37,7 +38,7 @@ public class PeriodicOutcome extends Outcome {
     } else {
       additionalCoverage = rightGoal - robotPositions[robotPositions.length - 1];
     }
-    return coverage + additionalCoverage / (rightGoal - leftGoal);
+    return coverage + Math.max(0, additionalCoverage / (rightGoal - leftGoal));
   }
 
   private static double getRobotCenterPosition(Observation observation) {
